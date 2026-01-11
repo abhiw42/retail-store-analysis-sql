@@ -109,31 +109,3 @@ LEFT JOIN sales s ON p.product_id = s.product_id
 GROUP BY c.category_id, c.category_name
 ORDER BY category_revenue DESC;
 
--- 9. Customer and product preferences by state
--- Geographic analysis with joins
-SELECT 
-    c.state,
-    cat.category_name,
-    COUNT(s.sale_id) as sales_count,
-    SUM(s.total_amount) as revenue
-FROM customers c
-INNER JOIN sales s ON c.customer_id = s.customer_id
-INNER JOIN products p ON s.product_id = p.product_id
-INNER JOIN categories cat ON p.category_id = cat.category_id
-GROUP BY c.state, cat.category_name
-ORDER BY c.state, revenue DESC;
-
--- 10. Recent sales with customer and product info
--- Time-based filtering with joins
-SELECT 
-    s.sale_date,
-    c.first_name,
-    c.last_name,
-    p.product_name,
-    s.quantity,
-    s.total_amount
-FROM sales s
-INNER JOIN customers c ON s.customer_id = c.customer_id
-INNER JOIN products p ON s.product_id = p.product_id
-WHERE s.sale_date >= '2023-05-01'
-ORDER BY s.sale_date DESC;

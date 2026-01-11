@@ -72,7 +72,7 @@ SELECT
     COUNT(s.sale_id) as total_sales,
     SUM(s.total_amount) as total_revenue,
     AVG(s.total_amount) as avg_transaction_value,
-    SUM(s.total_amount) / COUNT(DISTINCT c.customer_id) as revenue_per_customer
+    SUM(s.total_amount) / COUNT(DISTINCT c.customer_id) as avg_revenue_per_customer
 FROM customers c
 LEFT JOIN sales s ON c.customer_id = s.customer_id
 GROUP BY c.state
@@ -131,50 +131,3 @@ FROM (
 ) customer_totals
 GROUP BY customer_segment
 ORDER BY avg_spending DESC;
-
--- 9. New vs Returning Customer Analysis
--- Customer acquisition and retention metrics
-SELECT 
-    YEAR(s.sale_date) as year,
-    MONTH(s.sale_date) as month,
-    COUNT(DISTINCT s.customer_id) as total_customers,
-    COUNT(DISTINCT CASE 
-        WHEN s.sale_date = first_purchase.first_date THEN s.customer_id 
-    END) as new_customers,
-    COUNT(DISTINCT CASE 
-        WHEN s.sale_date > first_purchase.first_date THEN s.customer_id 
-    END) as returning_customers
-FROM sales s
-INNER JOIN (
-    SELECT customer_id, MIN(sale_date) as first_date
-    FROM sales
-    GROUP BY customer_id
-) first_purchase ON s.customer_id = first_purchase.customer_id
-GROUP BY YEAR(s.sale_date), MONTH(s.sale_date)
-ORDER BY year, month;
-
--- 10. Inventory and Sales Analysis
--- Products that need attention
-SELECT 
-    p.product_name,
-    c.category_name,
-    p.price,
-    COALESCE(sales_data.times_sold, 0) as times_sold,
-    COALESCE(sales_data.total_revenue, 0) as total_revenue,
-    CASE 
-        WHEN sales_data.times_sold IS NULL THEN 'Never Sold'
-        WHEN sales_data.times_sold < 2 THEN 'Low Sales'
-        WHEN sales_data.times_sold < 5 THEN 'Medium Sales'
-        ELSE 'High Sales'
-    END as sales_performance
-FROM products p
-INNER JOIN categories c ON p.category_id = c.category_id
-LEFT JOIN (
-    SELECT 
-        product_id,
-        COUNT(*) as times_sold,
-        SUM(total_amount) as total_revenue
-    FROM sales
-    GROUP BY product_id
-) sales_data ON p.product_id = sales_data.product_id
-ORDER BY COALESCE(sales_data.total_revenue, 0) DESC;
